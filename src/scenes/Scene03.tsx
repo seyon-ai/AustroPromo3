@@ -1,5 +1,6 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {BrowserFrame} from "../components/Frames";
 import {ArenaTile, Header, Sidebar} from "../components/UI";
@@ -9,6 +10,7 @@ import {easeInOut, easeOut, motionTime} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
 import {logoMaskUri} from "../lib/maskSvg";
 import {ui} from "../theme";
+import {UI_SPRING} from "../lib/motion";
 
 // 03 — "Post in the Arena. Choose your category." Hero: Arena.
 // Browser rises (anticipation), Arena revealed through a growing logo-shaped mask,
@@ -24,7 +26,7 @@ const TILES = [
 
 export const Scene03: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps} = useVideoConfig();
+  const {fps} = useLogical();
   const dur = sceneDur(3);
   const hit = hitLocal(3, "Arena");               // 37
   const focus = 70;                              // rack focus on category choice
@@ -32,14 +34,14 @@ export const Scene03: React.FC = () => {
 
   // browser rises with 3-frame counter-move (R3)
   const rise = interpolate(f, [0, 3, 22], [0, 6, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut});
-  const riseSpring = spring({frame: Math.max(0, f - 1), fps, config: {damping: 16, stiffness: 120}});
-  const browserY = interpolate(riseSpring, [0, 1], [320, 0]) + rise;
+  const riseSpring = spring({frame: Math.max(0, f - 1), fps, config: UI_SPRING});
+  const browserY = interpolate(riseSpring, [0, 1], [320, 0], {easing: easeOut}) + rise;
 
   // chevron mask grows from the logo's centre to fully reveal the Arena (vocab 11)
   const maskPct = interpolate(f, [hit - 8, hit + 26], [6, 260], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   return (
-    <Stage grainOpacity={0.045} watermark spotlightX={68}>
+    <Stage dur={dur} grainOpacity={0.04} watermark spotlightX={68}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         <div style={{position: "absolute", left: 120, top: 250, width: 520}}>
           <WordReveal text="Post in the Arena." start={22} stagger={4} size={96} align="left" accent={{words: ["Arena."], color: "#FFFFFF"}} />
@@ -60,11 +62,11 @@ export const Scene03: React.FC = () => {
                     const r = Math.floor(i / 3);
                     const c = i % 3;
                     const delay = 34 + (r + c) * 4; // diagonal waterfall (common fate)
-                    const s = spring({frame: Math.max(0, f - delay), fps, config: {damping: 14, stiffness: 150}});
+                    const s = spring({frame: Math.max(0, f - delay), fps, config: UI_SPRING});
                     const isFocus = i === 0;
                     const blur = isFocus
                       ? interpolate(f, [focus - 6, focus + 16], [12, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut})
-                      : interpolate(f, [focus - 6, focus + 16], [0, 3], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+                      : interpolate(f, [focus - 6, focus + 16], [0, 3], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut });
                     return (
                       <div key={name} style={{transform: `translateY(${(1 - s) * 70}px) scale(${isFocus ? 1.03 : 1})`, opacity: Math.min(1, s * 1.3)}}>
                         <ArenaTile name={name} sub={sub} width={300} height={180} active={isFocus} blur={blur} />
@@ -76,7 +78,7 @@ export const Scene03: React.FC = () => {
             </div>
           </div>
         </BrowserFrame>
-        <SoundCue frame={focus} src="sfx/tick.wav" volume={0.7} />
+        <SoundCue frame={focus} src="sfx/shimmer.wav" volume={0.7} />
       </AbsoluteFill>
     </Stage>
   );

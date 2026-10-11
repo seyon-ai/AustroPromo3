@@ -1,5 +1,6 @@
 import React from "react";
-import {AbsoluteFill, useVideoConfig} from "remotion";
+import {AbsoluteFill, } from "remotion";
+import {useLogical} from "./lib/logical";
 import {Film} from "./Film";
 import {C} from "./theme";
 
@@ -7,7 +8,7 @@ import {C} from "./theme";
 // Dedicated stacked layouts for scenes 03/04/05/08 are the next milestone (see README, "Director's notes").
 // For now the 1920x1080 canvas is fit to width and centred on the stage.
 export const FilmVertical: React.FC = () => {
-  const {width} = useVideoConfig();
+  const {width} = useLogical();
   const k = width / 1920;
   return (
     <AbsoluteFill style={{background: C.stage, overflow: "hidden"}}>

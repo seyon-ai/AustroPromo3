@@ -1,21 +1,23 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {BrowserFrame} from "../components/Frames";
 import {ArenaTile, Header, KingBadge, PostCard, Sidebar, VoteControl} from "../components/UI";
-import {Bloom, Flare} from "../components/Effects";
+import {Bloom, Flare, Ghosts} from "../components/Effects";
 import {ParticleBurst} from "../components/Particles";
 import {SoundCue} from "../components/Sound";
-import {easeInOut, easeOut, motionTime} from "../lib/motion";
+import {easeInOut, easeOut, motionTime, HERO_SPRING} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
 import {ui} from "../theme";
+import {UI_SPRING} from "../lib/motion";
 
 // 04 — "Every month, the post with the most votes wins — and its author is crowned King." Hero: King.
 // PEAK 1. Zoom into the tile → vote control fills with overshoot → count-up → KING badge drops with
 // impact → particle burst → flare + bloom → freeze (R6). Gold is allowed here.
 export const Scene04: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps} = useVideoConfig();
+  const {fps} = useLogical();
   const dur = sceneDur(4);
   const KING = hitLocal(4, "King");            // 175
   const freezes = [{at: KING, len: 8}];
@@ -25,21 +27,21 @@ export const Scene04: React.FC = () => {
   const zoom = interpolate(m, [0, 90], [1.0, 1.1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   // vote control: fill with spring overshoot; count-up (eased, last digits slow)
-  const fill = spring({frame: Math.max(0, m - 18), fps, config: {damping: 11, stiffness: 90}}) * 0.84;
+  const fill = spring({frame: Math.max(0, m - 18), fps, config: UI_SPRING}) * 0.84;
   const countT = interpolate(m, [18, 150], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut});
   const count = Math.round(412 * countT);
 
   // KING badge drop with anticipation (−4px counter-move), impact at KING frame
   const dropStart = KING - 5;
-  const dropS = spring({frame: Math.max(0, m - dropStart), fps, config: {damping: 12, stiffness: 180}});
-  const dropY = interpolate(dropS, [0, 1], [-260, 0]);
+  const dropS = spring({frame: Math.max(0, m - dropStart), fps, config: HERO_SPRING});
+  const dropY = interpolate(dropS, [0, 1], [-260, 0], {easing: easeOut});
   const badgeOpacity = m >= dropStart ? 1 : 0;
 
   // post card lifts after the crown lands
   const cardLift = interpolate(m, [KING, KING + 40], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut});
 
   return (
-    <Stage grainOpacity={0.045} spotlightX={50} camera={1 + 0.04 * interpolate(f, [0, dur], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp"})}>
+    <Stage dur={dur} grainOpacity={0.04} spotlightX={50}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         <BrowserFrame width={1500} height={780} style={{left: 210, top: 150, transform: `perspective(2400px) scale(${zoom})`}} perspective={false}>
           <div style={{position: "absolute", inset: 0, display: "flex", flexDirection: "column"}}>
@@ -56,9 +58,18 @@ export const Scene04: React.FC = () => {
                     <PostCard name="Arjun K." handle="arjun" initials="AK" hue={210} title="Cities should price car lanes like they price parking." body="Market-based curb pricing funds transit and clears traffic. Vote for the argument that holds up." category="Technology" width={720} highlight />
                   </div>
                   <VoteControl fill={fill} count={count} label="Valid votes" width={720} />
-                  <div style={{position: "absolute", left: 176, top: 20, transform: `translateY(${dropY}px)`, opacity: badgeOpacity}}>
-                    <KingBadge scale={1.8} />
-                  </div>
+                  <Ghosts active={f >= dropStart && f < dropStart + 12}>
+                    {(o: number) => {
+                      const mo = m - o;
+                      const ds = spring({frame: Math.max(0, mo - dropStart), fps, config: HERO_SPRING});
+                      const dy = interpolate(ds, [0, 1], [-260, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut});
+                      return (
+                        <div style={{position: "absolute", left: 176, top: 20, transform: `translateY(${dy}px)`, opacity: mo >= dropStart ? 1 : 0}}>
+                          <KingBadge scale={1.8} />
+                        </div>
+                      );
+                    }}
+                  </Ghosts>
                 </div>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {BrowserFrame} from "../components/Frames";
 import {KingRow} from "../components/UI";
@@ -8,6 +9,7 @@ import {easeOut, easeInOut} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
 import {SoundCue} from "../components/Sound";
 import {ui} from "../theme";
+import {UI_SPRING} from "../lib/motion";
 
 // 05 — "The Kingboard remembers every reign." Hero: remembers.
 // Rows scroll up through months; the current King row elevation-lifts with gold edge light;
@@ -22,15 +24,15 @@ const ROWS = [
 
 export const Scene05: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps} = useVideoConfig();
+  const {fps} = useLogical();
   const dur = sceneDur(5);
   const lift = hitLocal(5, "remembers");        // 35
   const scroll = interpolate(f, [0, 60], [260, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut});
-  const liftS = spring({frame: Math.max(0, f - lift), fps, config: {damping: 14, stiffness: 140}});
+  const liftS = spring({frame: Math.max(0, f - lift), fps, config: UI_SPRING});
   const cam = interpolate(f, [0, dur], [1, 1.04], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   return (
-    <Stage grainOpacity={0.045} watermark spotlightX={30} camera={cam}>
+    <Stage dur={dur} grainOpacity={0.04} watermark spotlightX={30}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         <div style={{position: "absolute", left: 120, top: 330, width: 620}}>
           <WordReveal text="The Kingboard remembers." start={26} stagger={5} size={100} align="left" accent={{words: ["remembers."], color: "#F5C542"}} />
@@ -52,7 +54,7 @@ export const Scene05: React.FC = () => {
             </div>
           </div>
         </BrowserFrame>
-        <SoundCue frame={lift} src="sfx/tick.wav" volume={0.5} />
+        <SoundCue frame={lift} src="sfx/shimmer.wav" volume={0.5} />
       </AbsoluteFill>
     </Stage>
   );

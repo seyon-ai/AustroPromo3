@@ -7,7 +7,9 @@
     "build:timing": "node scripts/build-timing.mjs",
     "preview": "remotion studio",
     "render": "remotion render AustroClashFilm out/AustroClashFilm.mp4 --codec=h264 --crf=18",
-    "render:vertical": "remotion render AustroClashFilmVertical out/AustroClashFilmVertical.mp4 --codec=h264 --crf=18"
+    "render:vertical": "remotion render AustroClashFilmVertical out/AustroClashFilmVertical.mp4 --codec=h264 --crf=18",
+    "render:4k": "remotion render AustroClashFilm out/AustroClashFilm-4k.mp4 --scale=2 --codec=h264 --crf=17 --pixel-format=yuv420p --jpeg-quality=95",
+    "render:proof": "remotion render AustroClashFilm out/proof.mp4 --scale=0.5 --crf=28 --concurrency=1"
   },
   "dependencies": {
     "@remotion/cli": "4.0.290",

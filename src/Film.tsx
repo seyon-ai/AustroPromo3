@@ -12,6 +12,8 @@ import {Scene07} from "./scenes/Scene07";
 import {Scene08} from "./scenes/Scene08";
 import {Scene09} from "./scenes/Scene09";
 import {Scene10} from "./scenes/Scene10";
+import {ChevronWipe} from "./components/Transitions";
+import {Sequence as Seq} from "remotion";
 
 // Music bed levels (brief §6): MUSIC_GAIN 0.16, duck to 0.09 under VO, swell to 0.32 in the final 3 s.
 export const MUSIC_GAIN = 0.16;
@@ -52,6 +54,13 @@ export const Film: React.FC = () => (
       );
     })}
 
+    {/* neutral chevron shape-wipes over the hard cuts into scenes 3, 5, 7, 9 */}
+    {[2, 4, 6, 8].map((idx) => (
+      <Seq key={`wipe${idx}`} from={Math.max(0, SCENES[idx].start - 8)} durationInFrames={18} layout="none">
+        <ChevronWipe len={16} color="#F5F5F7" peak={0.5} />
+      </Seq>
+    ))}
+
     {/* voiceover: one clip per scene, starts at its voStart */}
     {SCENES.map((s) => (
       <Sequence key={`vo${s.id}`} from={s.voStart} durationInFrames={s.voFrames + 12} layout="none">
@@ -60,7 +69,7 @@ export const Film: React.FC = () => (
     ))}
 
     {/* music bed with ducking and final swell */}
-    <Audio src={staticFile("music.wav")} volume={musicVolume} />
+    <Audio src={staticFile("music.mp3")} volume={musicVolume} />
 
     {GLOBAL_CUES.map((c, i) => (
       <Sequence key={`cue${i}`} from={Math.max(0, c.at)} layout="none">

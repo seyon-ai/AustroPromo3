@@ -11,8 +11,12 @@ export const easeInOut = Easing.inOut(Easing.cubic);
 export const ramp = (f: number, a: number, b: number, from = 0, to = 1, ease: (t: number) => number = easeOut) =>
   interpolate(f, [a, b], [from, to], {...clampOpts, easing: ease});
 
-/** Spring entrance (R2/R3). Returns 0→1 with optional overshoot. */
-export const sp = (frame: number, fps: number, delay = 0, damping = 14, stiffness = 170, mass = 1) =>
+/** Spring presets. UI: overdamped (no bounce). HERO: the only springs allowed to overshoot. */
+export const UI_SPRING: {damping: number; stiffness: number; mass: number} = {damping: 200, stiffness: 170, mass: 1};
+export const HERO_SPRING: {damping: number; stiffness: number; mass: number} = {damping: 14, stiffness: 120, mass: 0.8};
+
+/** Spring entrance (R2/R3). Returns 0→1. Defaults to the UI preset. */
+export const sp = (frame: number, fps: number, delay = 0, damping = UI_SPRING.damping, stiffness = UI_SPRING.stiffness, mass = UI_SPRING.mass) =>
   frame - delay <= 0 ? 0 : spring({frame: frame - delay, fps, config: {damping, stiffness, mass}});
 
 /**
@@ -34,7 +38,7 @@ export const anticipate = (f: number, start: number, px: number) =>
 
 /** Pop = one sprite at a time (R8); gentle scale overshoot for hero elements. */
 export const overshootScale = (frame: number, fps: number, delay = 0) =>
-  frame - delay <= 0 ? 0 : spring({frame: frame - delay, fps, config: {damping: 12, stiffness: 200}});
+  frame - delay <= 0 ? 0 : spring({frame: frame - delay, fps, config: HERO_SPRING});
 
 /** Deterministic pseudo-random in [0,1) per seed (replacement for Math.random). */
 export const rnd = (seed: number) => {

@@ -12,7 +12,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FPS = 30;
 const BEAT = 18;            // 100 BPM in frames: 60/100 s * 30 fps
 const LEAD = 9;             // visuals start 0.3 s before VO (scene 1 starts on frame 0 — R1)
-const TAIL = 18;            // 0.6 s resolved hold after VO (R4 needs >= 12 frames)
+const TAIL = 30;            // 1.0 s resolved hold after VO (R4 needs >= 12 frames)
 const VISUAL_VISUAL_LAG = 6; // R7: visual leads spoken word by ~6 frames
 
 const FFPROBE = process.env.FFPROBE ?? join(ROOT, "node_modules/@remotion/compositor-linux-x64-gnu/ffprobe");

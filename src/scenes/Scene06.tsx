@@ -1,5 +1,6 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {BadgeTile, Avatar, ProfileCard, ICON} from "../components/UI";
 import {WordReveal} from "../components/Text";
@@ -7,6 +8,7 @@ import {SoundCue} from "../components/Sound";
 import {easeOut, easeInOut} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
 import {rnd} from "../lib/motion";
+import {UI_SPRING} from "../lib/motion";
 
 // 06 — "Build your profile. Earn your badges. Form Squads with your Allies." Hero: Squads.
 // Three beat-cuts: profile header → badges 3D-flip (4-frame stagger) → magnetic cluster
@@ -21,7 +23,7 @@ const MEMBERS = [
 
 export const Scene06: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps, width, height} = useVideoConfig();
+  const {fps, width, height} = useLogical();
   const dur = sceneDur(6);
   const vw = width > height;
   const cam = interpolate(f, [0, dur], [1, 1.04], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
@@ -31,7 +33,7 @@ export const Scene06: React.FC = () => {
   const cutC = f >= CUT_C;
 
   // cut A: profile
-  const aS = spring({frame: f, fps, config: {damping: 16, stiffness: 120}});
+  const aS = spring({frame: f, fps, config: UI_SPRING});
 
   // cut B: badges flip with 4-frame stagger (3D rotateY)
   const badges = [["First Post", 210, ICON.pen], ["First Clash", 320, ICON.shield], ["Squad Founder", 150, ICON.users], ["Ally", 40, ICON.star]];
@@ -40,14 +42,14 @@ export const Scene06: React.FC = () => {
   const cx = vw ? 620 : 560;
   const cy = 540;
   const orbitT = f - CUT_C;
-  const pull = spring({frame: Math.max(0, orbitT - 6), fps, config: {damping: 13, stiffness: 110}});
+  const pull = spring({frame: Math.max(0, orbitT - 6), fps, config: UI_SPRING});
 
   // Ally line draws toward the Allies panel (line draw, vocab 6)
   const lineLen = 1000;
   const lineP = interpolate(f, [SQUADS + 30, SQUADS + 80], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   return (
-    <Stage grainOpacity={0.045} watermark spotlightX={50} camera={cam}>
+    <Stage dur={dur} grainOpacity={0.04} watermark spotlightX={50}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         {cutA ? (
           <AbsoluteFill style={{alignItems: "center", justifyContent: "center", opacity: Math.min(1, aS * 1.2), transform: `translateY(${(1 - aS) * 40}px)`}}>
@@ -59,7 +61,7 @@ export const Scene06: React.FC = () => {
           <AbsoluteFill style={{alignItems: "center", justifyContent: "center"}}>
             <div style={{display: "flex", gap: 26}}>
               {badges.map(([label, hue, glyph], i) => {
-                const s = spring({frame: Math.max(0, f - CUT_B - i * 4), fps, config: {damping: 14, stiffness: 160}});
+                const s = spring({frame: Math.max(0, f - CUT_B - i * 4), fps, config: UI_SPRING});
                 return <BadgeTile key={label as string} label={label as string} hue={hue as number} glyph={glyph as string} width={190} flip={s} />;
               })}
             </div>
@@ -69,7 +71,7 @@ export const Scene06: React.FC = () => {
         {cutC ? (
           <AbsoluteFill>
             {/* Squads headline */}
-            <div style={{position: "absolute", left: 120, top: 110, width: 900}}>
+            <div style={{position: "absolute", left: 120, top: 110, width: 900, zIndex: 2}}>
               <WordReveal text="Form Squads with Allies." start={SQUADS - 8} stagger={6} size={vw ? 96 : 88} align="left" accent={{words: ["Squads"], color: "#FFFFFF"}} />
             </div>
             {/* magnetic cluster */}
@@ -80,10 +82,10 @@ export const Scene06: React.FC = () => {
                 const startX = cx + Math.cos(a) * r0;
                 const startY = cy + Math.sin(a) * r0 * 0.6;
                 const orbit = orbitT > 40 ? Math.sin((orbitT - 40) / 40 + i) * 14 : 0; // slow orbit
-                const x = interpolate(pull, [0, 1], [startX, cx + Math.cos(a) * 150]) + orbit;
-                const y = interpolate(pull, [0, 1], [startY, cy + Math.sin(a) * 110]);
+                const x = interpolate(pull, [0, 1], [startX, cx + Math.cos(a) * 150], {easing: easeOut}) + orbit;
+                const y = interpolate(pull, [0, 1], [startY, cy + Math.sin(a) * 110], {easing: easeOut});
                 return (
-                  <div key={i} style={{position: "absolute", left: x - 34, top: y - 34}}>
+                  <div key={i} style={{position: "absolute", left: x - 34, top: y - 34, opacity: Math.min(1, pull * 2.5)}}>
                     <Avatar initials={ini as string} size={68} hue={hue as number} ring="#FFFFFF" />
                   </div>
                 );

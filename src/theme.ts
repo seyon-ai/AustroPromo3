@@ -1,5 +1,5 @@
 // Brand + UI tokens. UI colours extracted from the real AustroClash screenshot (PIL sampling).
-export const SITE_URL = "austroclash.com";
+export const SITE_URL = "austroclash.in";
 
 // Film stage (dark arena)
 export const C = {

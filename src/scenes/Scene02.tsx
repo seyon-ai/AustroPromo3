@@ -1,12 +1,14 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {Logo} from "../components/Logo";
 import {PostCard} from "../components/UI";
 import {Wordmark, WordReveal} from "../components/Text";
 import {Flare, Bloom, Flash, Chroma} from "../components/Effects";
-import {motionTime, easeOut, rnd} from "../lib/motion";
+import {motionTime, easeOut, rnd, HERO_SPRING} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
+import {UI_SPRING} from "../lib/motion";
 
 // 02 — "AustroClash. Where ideas go to fight." Hero: fight.
 // Shatter entrance (vocab 17) → logo emergence (R9) → letter wipe wordmark → freeze on "fight".
@@ -15,7 +17,7 @@ const FIGHT = hitLocal(2, "fight"); // 106
 
 export const Scene02: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps, width, height} = useVideoConfig();
+  const {fps, width, height} = useLogical();
   const dur = sceneDur(2);
   const freezes = [{at: IMPACT, len: 8}, {at: FIGHT, len: 8}];
   const m = motionTime(f, freezes);
@@ -34,9 +36,9 @@ export const Scene02: React.FC = () => {
   const size = 340;
   const u = size / 100;
   const topStart = 12, botStart = 15, diaStart = 20;
-  const topS = spring({frame: Math.max(0, m - topStart), fps, config: {damping: 12, stiffness: 170}});
-  const botS = spring({frame: Math.max(0, m - botStart), fps, config: {damping: 12, stiffness: 170}});
-  const diaS = spring({frame: Math.max(0, m - diaStart), fps, config: {damping: 9, stiffness: 180}});
+  const topS = spring({frame: Math.max(0, m - topStart), fps, config: HERO_SPRING});
+  const botS = spring({frame: Math.max(0, m - botStart), fps, config: HERO_SPRING});
+  const diaS = spring({frame: Math.max(0, m - diaStart), fps, config: HERO_SPRING});
   const topOff = (1 - topS) * -120 / u;
   const botOff = (1 - botS) * 120 / u;
   const diaScale = m < diaStart ? 0 : diaS;
@@ -49,7 +51,7 @@ export const Scene02: React.FC = () => {
   const showWordmark = f >= wmStart;
 
   return (
-    <Stage grainOpacity={0.045} watermark spotlightX={50}>
+    <Stage dur={dur} grainOpacity={0.04} watermark spotlightX={50}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         {/* shattered card */}
         {shatterOn ? (

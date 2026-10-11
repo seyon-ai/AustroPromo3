@@ -139,7 +139,8 @@ T = np.arange(N) / SR
 # scene timing (seconds) from src/timing.ts
 timing = open(os.path.join(ROOT, "src/timing.ts")).read()
 scene_start = {int(a): int(b) for a, b in re.findall(r"\"id\": (\d+),\s*\"start\": (\d+)", timing)}
-LOCKUP_FRAME = 1908  # hero "AustroClash" in scene 10 (src/timing.ts)
+_m = re.search(r'"word": "AustroClash",\s*"audioFrame": (\d+)', timing)
+LOCKUP_FRAME = int(_m.group(1))  # hero "AustroClash" in scene 10 (src/timing.ts)
 RISER_TARGETS = [scene_start[2] / FPS, scene_start[10] / FPS]
 LOCKUP_T = LOCKUP_FRAME / FPS
 
@@ -263,6 +264,6 @@ music = np.stack([mix_l, np.roll(mix_r, int(0.011 * SR))], axis=1)
 tail = int(1.0 * SR)
 music[-tail:] *= np.linspace(1, 0, tail)[:, None] ** 2
 music = normalize_peak(music, -3)
-wavfile.write(os.path.join(ROOT, "public/music.wav"), SR, (np.clip(music, -1, 1) * 32767).astype(np.int16))
+wavfile.write(os.path.join(ROOT, "public", "music.wav"), SR, (np.clip(music, -1, 1) * 32767).astype(np.int16))
 print(f"public/music.wav: {DUR:.1f}s stereo, peak {20*np.log10(np.max(np.abs(music))):.1f} dBFS")
 print("risers at", [round(x, 2) for x in RISER_TARGETS], "lockup hit at", round(LOCKUP_T, 2))

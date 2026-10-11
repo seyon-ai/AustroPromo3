@@ -1,10 +1,12 @@
 import React from "react";
-import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {PostCard} from "../components/UI";
 import {WordReveal} from "../components/Text";
 import {motionTime, easeInOut, easeIn, ramp} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
+import {easeOut} from "../lib/motion";
 
 // 01 — "Everyone's posting. Nobody's competing." Hero: competing.
 // Feed cards already in motion on frame 0, speed-ramped, then freeze and pull back into depth.
@@ -19,7 +21,7 @@ const POSTS = [
 
 export const Scene01: React.FC = () => {
   const f = useCurrentFrame();
-  const {width, height} = useVideoConfig();
+  const {width, height} = useLogical();
   const hit = hitLocal(1, "competing");          // 66
   const dur = sceneDur(1);
   // speed ramp: accelerate into the freeze (quadratic), then hold (R6)
@@ -28,7 +30,7 @@ export const Scene01: React.FC = () => {
   const frozen = f >= hit ? scroll : scroll;
   const pull = interpolate(f, [hit, hit + 44], [1.55, 0.78], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
   const desat = interpolate(f, [hit, hit + 22], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeIn});
-  const dim = interpolate(f, [hit + 4, hit + 26], [0, 0.55], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  const dim = interpolate(f, [hit + 4, hit + 26], [0, 0.55], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeOut });
   const headlineIn = interpolate(f, [hit + 2, hit + 16], [0, 1], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   // depth grid: 3 rows x 2 columns of cards, each with its own speed & depth
@@ -41,7 +43,7 @@ export const Scene01: React.FC = () => {
   });
 
   return (
-    <Stage grainOpacity={0.045} watermark>
+    <Stage dur={dur} grainOpacity={0.04} watermark>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 10)}}>
         <AbsoluteFill style={{transform: `scale(${pull})`, transformOrigin: "50% 50%", filter: `blur(${2 + 4 * (1 - pull / 1.55)}px) grayscale(${desat})`}}>
           {cards.map((c) => {

@@ -1,4 +1,8 @@
 name: Render Film
+
+# Push to main  → fast 1080p landscape render (scale 1), uploaded as an artifact.
+# Manual run    → choose scale ("1" = 1080p, "2" = 4K via --scale=2, dispatch-only)
+#                 and whether to also render the vertical cut (vertical=true).
 on:
   push:
     branches: [main]
@@ -7,10 +11,22 @@ on:
       composition:
         description: "Composition id"
         default: "AustroClashFilm"
+        type: string
+      scale:
+        description: "Render scale: 1 = 1920x1080 (default), 2 = 3840x2160 (4K)"
+        default: "1"
+        type: choice
+        options: ["1", "2"]
+      vertical:
+        description: "Also render the vertical 1080x1920 cut (at the chosen scale)"
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,12 +35,36 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx remotion browser ensure
+
+      - name: Resolve render settings
+        id: cfg
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "comp=${{ github.event.inputs.composition }}" >> "$GITHUB_OUTPUT"
+            echo "scale=${{ github.event.inputs.scale }}" >> "$GITHUB_OUTPUT"
+            echo "vertical=${{ github.event.inputs.vertical }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "comp=AustroClashFilm" >> "$GITHUB_OUTPUT"
+            echo "scale=1" >> "$GITHUB_OUTPUT"
+            echo "vertical=false" >> "$GITHUB_OUTPUT"
+          fi
+          mkdir -p out
+
       - name: Render landscape
-        run: npx remotion render ${{ github.event.inputs.composition || 'AustroClashFilm' }} out/AustroClashFilm.mp4 --codec=h264 --crf=18 --concurrency=2
+        run: >
+          npx remotion render ${{ steps.cfg.outputs.comp }} out/AustroClashFilm.mp4
+          --scale=${{ steps.cfg.outputs.scale }} --codec=h264 --crf=17
+          --pixel-format=yuv420p --jpeg-quality=95 --concurrency=2
+
       - name: Render vertical
-        run: npx remotion render AustroClashFilmVertical out/AustroClashFilmVertical.mp4 --codec=h264 --crf=18 --concurrency=2
+        if: steps.cfg.outputs.vertical == 'true'
+        run: >
+          npx remotion render AustroClashFilmVertical out/AustroClashFilmVertical.mp4
+          --scale=${{ steps.cfg.outputs.scale }} --codec=h264 --crf=17
+          --pixel-format=yuv420p --jpeg-quality=95 --concurrency=2
+
       - uses: actions/upload-artifact@v4
         with:
-          name: austroclash-film
+          name: austroclash-film-${{ steps.cfg.outputs.scale }}x
           path: out/*.mp4
           retention-days: 14

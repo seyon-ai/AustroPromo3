@@ -1,5 +1,6 @@
 import React from "react";
-import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {AbsoluteFill, interpolate, spring, useCurrentFrame, } from "remotion";
+import {useLogical} from "../lib/logical";
 import {Stage} from "../components/Stage";
 import {BrowserFrame} from "../components/Frames";
 import {PointsBalance, RefereeCard, SignatureBlock, StoreItem} from "../components/UI";
@@ -7,21 +8,22 @@ import {WordReveal} from "../components/Text";
 import {SoundCue} from "../components/Sound";
 import {easeInOut, easeOut} from "../lib/motion";
 import {hitLocal, sceneDur, exitOpacity} from "../lib/scene";
+import {UI_SPRING} from "../lib/motion";
 
 // 09 — "Dress your identity in the Austro Store. Sign it with your AustroSignature.
 //        Spend AustroPoints. And let the AI Referee keep it fair."
 // Beat-cuts: Store item light sweep → signature line draw → AustroPoints count-up → AI Referee scan-line.
-const CUT_B = 100;   // "Austro Store."
-const CUT_C = 180;   // "AustroSignature."
-const CUT_D = 238;   // "AustroPoints."
-const CUT_E = 308;   // "AI Referee."
-const STORE_HERO = hitLocal(9, "Store");              // 100
-const SIG_HERO = hitLocal(9, "AustroSignature");      // 180
-const POINTS_HERO = hitLocal(9, "AustroPoints");      // 238
-const REF_HERO = hitLocal(9, "Referee");              // 308
+const STORE_HERO = hitLocal(9, "Store");
+const SIG_HERO = hitLocal(9, "AustroSignature");
+const POINTS_HERO = hitLocal(9, "AustroPoints");
+const REF_HERO = hitLocal(9, "Referee");
+const CUT_B = STORE_HERO;   // "Austro Store."
+const CUT_C = SIG_HERO;     // "AustroSignature."
+const CUT_D = POINTS_HERO;  // "AustroPoints."
+const CUT_E = REF_HERO;     // "AI Referee."
 
 const Headline: React.FC<{text: string; start: number; accent?: string}> = ({text, start, accent}) => {
-  const {width, height} = useVideoConfig();
+  const {width, height} = useLogical();
   return (
     <div style={{position: "absolute", left: 120, top: 300, width: 760}}>
       <WordReveal text={text} start={start} stagger={5} size={width > height ? 108 : 96} align="left" accent={accent ? {words: [accent], color: "#FFFFFF"} : undefined} />
@@ -31,14 +33,14 @@ const Headline: React.FC<{text: string; start: number; accent?: string}> = ({tex
 
 export const Scene09: React.FC = () => {
   const f = useCurrentFrame();
-  const {fps} = useVideoConfig();
+  const {fps} = useLogical();
   const dur = sceneDur(9);
   const cam = interpolate(f, [0, dur], [1, 1.04], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
   const inA = f < CUT_B, inB = f >= CUT_B && f < CUT_C, inC = f >= CUT_C && f < CUT_D, inD = f >= CUT_D && f < CUT_E, inE = f >= CUT_E;
 
   // A: store item light sweep, landing at the word "Store"
   const sweep = interpolate(f, [40, STORE_HERO - 4], [-40, 140], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
-  const itemS = spring({frame: Math.max(0, f - 2), fps, config: {damping: 16, stiffness: 140}});
+  const itemS = spring({frame: Math.max(0, f - 2), fps, config: UI_SPRING});
 
   // B: store row (same product family)
   // C: signature line draw leads to the AustroSignature hero
@@ -53,7 +55,7 @@ export const Scene09: React.FC = () => {
   const pulse = interpolate(f, [REF_HERO + 46, REF_HERO + 70, REF_HERO + 96], [0, 1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut});
 
   return (
-    <Stage grainOpacity={0.045} watermark spotlightX={60} camera={cam}>
+    <Stage dur={dur} grainOpacity={0.04} watermark spotlightX={60}>
       <AbsoluteFill style={{opacity: exitOpacity(f, dur, 12)}}>
         {inA ? (
           <>
